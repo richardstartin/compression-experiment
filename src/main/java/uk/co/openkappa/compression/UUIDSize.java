@@ -1,4 +1,4 @@
-package uk.co.openkappa.uuid;
+package uk.co.openkappa.compression;
 
 import java.util.UUID;
 
@@ -16,8 +16,8 @@ public class UUIDSize {
     var uuidLatin1 = uuidString.getBytes(ISO_8859_1);
     System.out.println("Format,Size (bytes),Ratio ");
     System.out.println("binary" + "," + binary.length + "," + 1);
-    System.out.println("ISO_8859_1" + "," + uuidLatin1.length + "," + ((double)uuidLatin1.length / binary.length));
-    System.out.println("UTF_8" + "," + uuidUTF8.length + "," + ((double)uuidUTF8.length / binary.length));
-    System.out.println("UTF_16" + "," + uuidUTF16.length + "," + ((double)uuidUTF16.length / binary.length));
+    System.out.println("ISO-8859-1" + "," + uuidLatin1.length + "," + ((double)uuidLatin1.length / binary.length));
+    System.out.println("UTF-8" + "," + uuidUTF8.length + "," + ((double)uuidUTF8.length / binary.length));
+    System.out.println("UTF-16" + "," + uuidUTF16.length + "," + ((double)uuidUTF16.length / binary.length));
   }
 }
