@@ -112,6 +112,10 @@ class Gzip<T> implements Compression<T> {
 
   @Override
   public int bytes(int count, IntFunction<Stream<T>> gen, Function<T, byte[]> serialiser) {
+    return compress(count, gen, serialiser).length;
+  }
+
+  public byte[] compress(int count, IntFunction<Stream<T>> gen, Function<T, byte[]> serialiser) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream(256 * 1024 * 1024);
     try (GZIPOutputStream gzos = new GZIPOutputStream(bos)) {
       Iterable<byte[]> data = () -> gen.apply(count).map(serialiser).iterator();
@@ -119,33 +123,43 @@ class Gzip<T> implements Compression<T> {
         gzos.write(d);
       }
       gzos.finish();
-      return bos.size();
+      return bos.toByteArray();
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 }
 
-@FunctionalInterface
-interface Throws<T, U, E extends Exception> {
-  U apply(T value) throws E;
-}
-
 final class Util {
 
-  static byte[] base64(byte[] input) {
-    return Base64.getEncoder().encode(input);
+  @FunctionalInterface
+  interface Throws<T, U, E extends Exception> {
+    U apply(T value) throws E;
   }
 
+  static <T, U, E extends Exception> Function<T, U> unchecked(Throws<T, U, E> unsafe) {
+    return t -> {
+      try {
+        return unsafe.apply(t);
+      } catch (Exception exception) {
+        throw new RuntimeException(exception);
+      }
+    };
+  }
+
+  static final Function<byte[], byte[]> base64 = input -> Base64.getEncoder().encode(input);
+
+  static final Function<byte[], byte[]> unbase64 = input -> Base64.getDecoder().decode(input);
+
   static Stream<byte[]> randomKiloBytes(int count) {
-    return gen(count, random);
+    return generate(count, random);
   }
 
   static Stream<byte[]> monotonicKiloBytes(int count) {
-    return gen(count, monotonic);
+    return generate(count, monotonic);
   }
 
-  static Stream<byte[]> gen(int count, IntFunction<byte[]> map) {
+  static Stream<byte[]> generate(int count, IntFunction<byte[]> map) {
     return IntStream.range(0, count).mapToObj(map);
   }
 
@@ -168,18 +182,10 @@ final class Util {
     return kb;
   };
 
-  static <T, U, E extends Exception> Function<T, U> unchecked(Throws<T, U, E> unsafe) {
-    return t -> {
-      try {
-        return unsafe.apply(t);
-      } catch (Exception exception) {
-        throw new RuntimeException(exception);
-      }
-    };
-  }
-
   static final Function<byte[], byte[]> snappy = unchecked(org.xerial.snappy.Snappy::compress);
 
-  static final Function<byte[], byte[]> lz4 = LZ4Factory.fastestInstance().highCompressor()::compress;
+  static final Function<byte[], byte[]> unsnappy = unchecked(org.xerial.snappy.Snappy::uncompress);
+
+  static final Function<byte[], byte[]> lz4 = LZ4Factory.fastestInstance().fastCompressor()::compress;
 
 }
