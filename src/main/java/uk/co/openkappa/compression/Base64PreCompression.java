@@ -18,6 +18,7 @@ public class Base64PreCompression {
             new Uncompressed<byte[]>(),
             new Gzip<byte[]>()
     );
-    benchmark(encodings, compressions, Util::monotonicKiloBytes, 1_000_000);
+    //benchmark(encodings, compressions, Util::monotonicKiloBytes, 1_000_000);
+    benchmark(encodings, compressions, Util::sinusoidalKiloBytes, 1_000_000);
   }
 }

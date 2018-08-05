@@ -11,9 +11,13 @@ import java.util.Base64;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.function.IntSupplier;
+import java.util.function.IntUnaryOperator;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
+
+import static java.lang.Math.sin;
 
 interface Compression<T> {
   String name();
@@ -159,6 +163,10 @@ final class Util {
     return generate(count, monotonic);
   }
 
+  static Stream<byte[]> sinusoidalKiloBytes(int count) {
+    return generate(count, sinusoidal);
+  }
+
   static Stream<byte[]> generate(int count, IntFunction<byte[]> map) {
     return IntStream.range(0, count).mapToObj(map);
   }
@@ -181,6 +189,19 @@ final class Util {
     }
     return kb;
   };
+
+  static final IntFunction<byte[]> sinusoidal = i -> {
+      byte[] kb = new byte[1024];
+      int from = (int)(1024 * sin(i * 256));
+      for (int j = 0; j < 1024; j += 4) {
+        kb[j] = (byte)from;
+        kb[j + 1] = (byte)(from >>> 8);
+        kb[j + 2] = (byte)(from >>> 16);
+        kb[j + 3] = (byte)(from >>> 24);
+        from = (int)(1024 * sin(i * 256 + j));
+      }
+      return kb;
+    };
 
   static final Function<byte[], byte[]> snappy = unchecked(org.xerial.snappy.Snappy::compress);
 
